@@ -42,3 +42,48 @@ IntruderQ = np.array([[-lambdas[0],lambdas[0],0,0,0,0,0,0,0,0],
                       [0,0,0,0,0,0,lambdas[7]/2,-lambdas[7],lambdas[7]/2,0],
                       [0,0,0,0,0,lambdas[8]/2,0,lambdas[8]/2,-lambdas[8],0],
                       [0,0,0,0,lambdas[9],0,0,0,0,-lambdas[9]]])
+
+
+def nextstate_drone(t):
+    w = random.random()
+    current_state = int(DroneX[i]-1)
+    DroneX[i+1] = np.min(np.where(np.cumsum(DroneQ[current_state,:])>=w)[0])+1
+    return DroneX
+
+
+
+T = 1000
+DroneX = np.zeros([T])
+DroneX[0] = 7
+
+IntX = [[9, np.random.exponential(lambdas[-1])],[]]
+
+def SojournBool(IntX,t):
+    if sum(IntX[:,1]) > t:
+        detSojourn == False
+    else:
+        detSojourn == True
+    return detSojourn
+
+
+
+for i in range(0,T-1):
+    DroneX = nextstate_drone(i)
+
+        
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
