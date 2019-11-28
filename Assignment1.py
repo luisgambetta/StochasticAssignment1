@@ -43,6 +43,17 @@ IntruderQ = np.array([[-lambdas[0],lambdas[0],0,0,0,0,0,0,0,0],
                       [0,0,0,0,0,lambdas[8]/2,0,lambdas[8]/2,-lambdas[8],0],
                       [0,0,0,0,lambdas[9],0,0,0,0,-lambdas[9]]])
 
+IntruderT = np.array([[0,1.0,0,0,0,0,0,0,0,0],
+                      [0.5,0,0.5,0,0,0,0,0,0,0],
+                      [0,1/3,0,1/3,0,0,1/3,0,0,0],
+                      [0,0,1/2,0,1/2,0,0,0,0,0],
+                      [0,0,0,1/4,0,1/4,1/4,0,0,1/4],
+                      [0,0,0,0,1/2,0,0,0,1/2,0],
+                      [0,0,1/3,0,1/3,0,0,1/3,0,0],
+                      [0,0,0,0,0,0,1/2,0,1/2,0],
+                      [0,0,0,0,0,1/2,0,1/2,0,0],
+                      [0,0,0,0,1,0,0,0,0,0]])
+
 
 def nextstate_drone(t):
     w = random.random()
@@ -51,39 +62,48 @@ def nextstate_drone(t):
     return DroneX
 
 
-
-T = 1000
-DroneX = np.zeros([T])
-DroneX[0] = 7
-
-IntX = [[9, np.random.exponential(lambdas[-1])],[]]
-
-def SojournBool(IntX,t):
-    if sum(IntX[:,1]) > t:
-        detSojourn == False
-    else:
-        detSojourn == True
-    return detSojourn
-
-
-
-for i in range(0,T-1):
-    DroneX = nextstate_drone(i)
-
+class Drone:
+    def __init__(self, name, DroneX, t):
+        self.name = name
+        self.DroneX = DroneX
+        self.t = t
         
+    def updateX(self):
+        w = random.random()
+        current_state = int(self.DroneX[self.t]-1)
+        self.DroneX[self.t+1] = np.min(np.where(np.cumsum(DroneQ[current_state,:])>=w)[0])+1
+        self.t += 1
+        
+        
+class Intruder:
+    def __init__(self, name, IntX, Intt):
+        self.name = name
+        self.IntX = IntX
+        self.Intt = Intt 
+        
+    def detSoTime(self):
+        room = self.IntX[-1]
+        SoTime = np.random.exponential(lambdas[int(self.IntX[-1])-1])
+        return SoTime
     
+    def newroom(self):
+        w = random.random()
+        current_state = int(self.IntX[-1]-1)
+        room = np.where(np.cumsum(IntruderT[current_state,:]) >= w)[0][0]
+        return room
+    
+    def updateX(self):
+        SoTime = self.detSoTime()
+        self.Intt.append(SoTime)
+        newroom = self.newroom()
+        self.IntX = np.append(self.IntX,[newroom])
+        return self.IntX, self.Intt
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+DroneX = np.zeros([1])
+DroneX[0] = 7
+D1 = Drone('D1', DroneX, 0)
+
+IntX = np.zeros([1])
+IntX[0] = 9
+I1 = Intruder('I1',IntX,[0])
