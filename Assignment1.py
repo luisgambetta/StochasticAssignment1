@@ -10,7 +10,31 @@ import random
 import math
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
+
+# Which lambda values to use:
+# choose: lambdas (original values), lambdas_inverse (inverse of stationary matrix)...
+# lambdas_pronounced (pronounced version of lambdas_inverse)
+lambda_array = lambdas
+
+# Stay in room 10 for 180 mins?
+stay10 = False
+
+# Run to room 10
+run10 = True
+
+# Stay in room 1 for 180 mins?
+stay1 = False
+
+# Run to room 1
+run1 = False
+
+# Make a histogram
+makeplot = False
+
+# Number of simulation runs
+sims = 100000
 
 
 DroneQ = np.array([[0,1,0,0,0,0,0,0,0,0],   # 1
@@ -34,6 +58,28 @@ lambdas = np.array([0.447213595,
                     0.948683298,
                     1.0,
                     1.048808848])
+
+lambdas_inverse = np.array([22.00220022,
+                    11.00110011,
+                    7.333528894,
+                    11.00110011,
+                    5.500550055,
+                    11.00110011,
+                    7.333528894,
+                    11.00110011,
+                    11.00110011,
+                    22.00220022])
+
+lambdas_strategy2 = np.array([587.6448667,
+                    17.14124947,
+                    5.275657607,
+                    17.14124947,
+                    2.927562934,
+                    17.14124947,
+                    5.275657607,
+                    17.14124947,
+                    17.14124947,
+                    587.6448667])
 
 IntruderQ = np.array([[-lambdas[0],lambdas[0],0,0,0,0,0,0,0,0],
                       [0.5*lambdas[1],-lambdas[1],0.5*lambdas[1],0,0,0,0,0,0,0],
@@ -91,7 +137,7 @@ class Intruder:
         
     def detSoTime(self):
         room = self.IntX[-1]
-        SoTime = np.random.exponential(lambdas[int(self.IntX[-1])-1])
+        SoTime = np.random.exponential(lambda_array[int(self.IntX[-1])-1])
         return SoTime
     
     def newroom(self):
@@ -152,17 +198,40 @@ def Collision(Drone,Intruder):
 TimeToCollision = []
 CollisionByRoom = [[],[],[],[],[], [],[],[],[],[]]   
 
-for i in range(100000):
+
+for i in range(sims):
     DroneX = np.zeros([1])
     DroneX[0] = 7
     D1 = Drone('D1', DroneX, 0)
-    
-    IntX = np.zeros([1])
-    IntX[0] = 9
-    I1 = Intruder('I1',IntX,[])
-    I1.updateX()
+
+    if stay10==False and stay1==False and run10 == False and run1 == False:
+        IntX = np.zeros([1])
+        IntX[0] = 9
+        I1 = Intruder('I1',IntX,[])
+        I1.updateX()
+     
+    elif stay10 == True:        
+        IntX = np.array([9,6,5,10])
+        I1 = Intruder('I1',IntX,[0.01,0.01,0.01])
+        I1.updateX()
+        
+    elif run10 == True:
+        IntX = np.array([9,6,5,10,5])
+        I1 = Intruder('I1',IntX,[0.01,0.01,0.01,180.1])
+        I1.updateX()
+        
+    elif stay1 == True:
+        IntX = np.array([9,8,7,3,2,1])
+        I1 = Intruder('I1',IntX,[0.01,0.01,0.01,0.01])
+        I1.updateX()
+        
+    else:
+        IntX = np.array([9,8,7,3,2,1,2])
+        I1 = Intruder('I1',IntX,[0.01,0.01,0.01,0.01, 180.1])
+        I1.updateX()
     
     Collided = False
+
     
     while Collided != True:
         if nextToUpdate(D1,I1) ==True:
@@ -174,47 +243,37 @@ for i in range(100000):
             IntUpdate = True
             I1.updateX()
             
-        if Collision(D1,I1) != None:
-            #print(Collision(D1,I1))
-            TimeToCollision.append(Collision(D1,I1)[0])
-            CollisionByRoom[int(Collision(D1,I1)[1]) - 1].append(Collision(D1,I1)[0])
-            Collided = True
-            break
+        if stay10 == False and stay1 == False:
+            if Collision(D1,I1) != None:
+                #print(Collision(D1,I1))
+                TimeToCollision.append(Collision(D1,I1)[0])
+                CollisionByRoom[int(Collision(D1,I1)[1]) - 1].append(Collision(D1,I1)[0])
+                Collided = True
+                break
+        
+        if stay10 == True or stay1 == True:
+            if D1.DroneX[-1]==10:
+                TimeToCollision.append(D1.t)
+                Collided = True
+                break
 
 # matplotlib histogram
-asdf = plt.hist(CollisionByRoom[3], color = 'blue', edgecolor = 'black',
-         bins = 1000)
-# Add labels
-plt.title('Distribution of time it takes for Drone to catch Intruder at room 4')
-plt.xlabel('Time taken (mins)')
-plt.ylabel('Occurances')
-axes = plt.gca()
-axes.set_xlim([0,50])
-axes.set_ylim([0,100])
 
-plt.savefig('asdf.png')
+            
+#asdf = plt.hist(CollisionByRoom[9], color = 'blue', edgecolor = 'black',
+     #    bins = 1000)
+# Add labels
+if makeplot == True:
+    asdf = plt.hist(TimeToCollision, color = 'blue', edgecolor = 'black',
+         bins = 80)
+    plt.title('Distribution of time it takes for Drone to catch Intruder at room 10')
+    plt.xlabel('Time taken (mins)')
+    plt.ylabel('Occurances')
+    axes = plt.gca()
+    axes.set_xlim([0,50])
+    #axes.set_ylim([0,100])    
+    plt.savefig('asdf.png')
+    
+    
 print("")
 print(sum(TimeToCollision)/len(TimeToCollision))
-
-
-# Show distributions of rooms visited
-# Show 4 different binwidths
-            
-"""        
-for i in CollisionByRoom:
-    
-    # Set up the plot
-    ax = plt.subplot(3,4, CollisionByRoom.index(i) + 1)
-    
-    # Draw the plot
-    ax.hist(i, bins = 150,
-             color = 'blue', edgecolor = 'black')
-    
-    # Title and labels
-    ax.set_title('Distribution of collisions at room %d' % CollisionByRoom.index(i), size = 30)
-    ax.set_xlabel('Time to collision (min)', size = 22)
-    ax.set_ylabel('Occurances', size= 22)
-
-plt.tight_layout()
-plt.show()
-"""
