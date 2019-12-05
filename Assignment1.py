@@ -5,6 +5,7 @@ Created on Tue Nov 26 14:30:09 2019
 @author: Kees 't Hooft`
 """
 
+# Importing modules
 import numpy as np
 import random
 import math
@@ -12,30 +13,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-
-# Which lambda values to use:
-# choose: lambdas (original values), lambdas_inverse (inverse of stationary matrix)...
-# lambdas_pronounced (pronounced version of lambdas_inverse)
-lambda_array = lambdas
-
-# Stay in room 10 for 180 mins?
-stay10 = False
-
-# Run to room 10
-run10 = True
-
-# Stay in room 1 for 180 mins?
-stay1 = False
-
-# Run to room 1
-run1 = False
-
-# Make a histogram
-makeplot = False
-
-# Number of simulation runs
-sims = 100000
-
+#-----------------------------------------------------------------------------
+# ----------- Q-MATRIX, TRANSITION MATRIX, ECT. USED -------------------------
+# ----------------------------------------------------------------------------
 
 DroneQ = np.array([[0,1,0,0,0,0,0,0,0,0],   # 1
                    [0.5,0,0.5,0,0,0,0,0,0,0],   # 2
@@ -70,7 +50,7 @@ lambdas_inverse = np.array([22.00220022,
                     11.00110011,
                     22.00220022])
 
-lambdas_strategy2 = np.array([587.6448667,
+lambdas_pronounced = np.array([587.6448667,
                     17.14124947,
                     5.275657607,
                     17.14124947,
@@ -102,6 +82,38 @@ IntruderT = np.array([[0,1.0,0,0,0,0,0,0,0,0],
                       [0,0,0,0,0,0,1/2,0,1/2,0],
                       [0,0,0,0,0,1/2,0,1/2,0,0],
                       [0,0,0,0,1,0,0,0,0,0]])
+
+# ----------------------------------------------------------------------------
+# ----------- INPUT PARAMETERS TO DETERMINE INTRUDER'S STRATEGY --------------
+# ----------------------------------------------------------------------------
+# Change these if the user wants to alter the strategy of the intruder.
+
+# Which lambda values to use:
+# choose: lambdas (original values), lambdas_inverse (inverse of stationary matrix)...
+# lambdas_pronounced (pronounced version of lambdas_inverse)
+lambda_array = lambdas_pronounced 
+
+# Stay in room 10 for 180 mins
+stay10 = False
+
+# Run to room 10
+run10 = True
+
+# Stay in room 1 for 180 mins
+stay1 = False
+
+# Run to room 1
+run1 = False
+
+# Make a histogram
+makeplot = False
+
+# Number of simulation runs
+sims = 500000
+
+# ----------------------------------------------------------------------------
+# ----------- INPUT PARAMETERS TO DETERMINE INTRUDER'S STRATEGY --------------
+# ----------------------------------------------------------------------------
 
 
 def nextstate_drone(t):
@@ -195,11 +207,21 @@ def Collision(Drone,Intruder):
         if Intruder.IntX[-2] == Drone.DroneX[DroneTimelower]:
             return Timelower, Intruder.IntX[-2]
         
+        
+
+# ----------------------------------------------------------------------------
+# ----------- INPUT PARAMETERS TO DETERMINE INTRUDER'S STRATEGY --------------
+# ----------------------------------------------------------------------------
+ 
+        
+        
 TimeToCollision = []
 CollisionByRoom = [[],[],[],[],[], [],[],[],[],[]]   
 
 
 for i in range(sims):
+    if i%100==0:
+        print(i)
     DroneX = np.zeros([1])
     DroneX[0] = 7
     D1 = Drone('D1', DroneX, 0)
