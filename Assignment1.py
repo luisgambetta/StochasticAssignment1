@@ -39,27 +39,27 @@ lambdas = np.array([0.447213595,
                     1.0,
                     1.048808848])
 
-lambdas_inverse = np.array([22.00220022,
-                    11.00110011,
-                    7.333528894,
-                    11.00110011,
-                    5.500550055,
-                    11.00110011,
-                    7.333528894,
-                    11.00110011,
-                    11.00110011,
-                    22.00220022])
+lambdas_inverse = np.array([1/22.00220022,
+                    1/11.00110011,
+                    1/7.333528894,
+                    1/11.00110011,
+                    1/5.500550055,
+                    1/11.00110011,
+                    1/7.333528894,
+                    1/11.00110011,
+                    1/11.00110011,
+                    1/22.00220022])
 
-lambdas_pronounced = np.array([587.6448667,
-                    17.14124947,
-                    5.275657607,
-                    17.14124947,
-                    2.927562934,
-                    17.14124947,
-                    5.275657607,
-                    17.14124947,
-                    17.14124947,
-                    587.6448667])
+lambdas_pronounced = np.array([1/587.6448667,
+                    1/17.14124947,
+                    1/5.275657607,
+                    1/17.14124947,
+                    1/2.927562934,
+                    1/17.14124947,
+                    1/5.275657607,
+                    1/17.14124947,
+                    1/17.14124947,
+                    1/587.6448667])
 
 IntruderQ = np.array([[-lambdas[0],lambdas[0],0,0,0,0,0,0,0,0],
                       [0.5*lambdas[1],-lambdas[1],0.5*lambdas[1],0,0,0,0,0,0,0],
@@ -91,13 +91,13 @@ IntruderT = np.array([[0,1.0,0,0,0,0,0,0,0,0],
 # Which lambda values to use:
 # choose: lambdas (original values), lambdas_inverse (inverse of stationary matrix)...
 # lambdas_pronounced (pronounced version of lambdas_inverse)
-lambda_array = lambdas_pronounced 
+lambda_array = lambdas
 
 # Stay in room 10 for 180 mins
 stay10 = False
 
 # Run to room 10
-run10 = True
+run10 = False
 
 # Stay in room 1 for 180 mins
 stay1 = False
@@ -105,59 +105,76 @@ stay1 = False
 # Run to room 1
 run1 = False
 
+# SoJourn time always rounding up to nearest integer 
+# roundup = False
+
 # Make a histogram
-makeplot = False
+makeplot = True
 
 # Number of simulation runs
-sims = 500000
+sims = 50000
 
 # ----------------------------------------------------------------------------
-# ----------- INPUT PARAMETERS TO DETERMINE INTRUDER'S STRATEGY --------------
+# ------Establishing drone and intruder functions to be used in sim ----------
 # ----------------------------------------------------------------------------
 
-
+# returns the next room the drone will be in, given the time since entering house
+# NOT USED 
 def nextstate_drone(t):
     w = random.random()
     current_state = int(DroneX[i]-1)
     DroneX[i+1] = np.min(np.where(np.cumsum(DroneQ[current_state,:])>=w)[0])+1
     return DroneX
 
-
+# making a class for the drone
 class Drone:
+    # attributes
+    # DroneX = a list of the rooms visited by the drone
+    # t = the time of the most recent addition to DroneX (the current timestep the drone is on)
     def __init__(self, name, DroneX, t):
         self.name = name
         self.DroneX = DroneX
         self.t = t
         
+    # This fuctions updates the drone's position and time parameter.     
     def updateX(self):
         w = random.random()
         current_state = int(self.DroneX[self.t]-1)
-        #self.DroneX[self.t+1] = np.min(np.where(np.cumsum(DroneQ[current_state,:])>=w)[0])+1
-        #self.DroneX.append(np.min(np.where(np.cumsum(DroneQ[current_state,:])>=w)[0])+1)
+        # determines the next room to enter, by giving neighboring rooms equal probability
         self.DroneX = np.append(self.DroneX, np.asarray([np.min(np.where(np.cumsum(DroneQ[current_state,:])>=w)[0])+1]))
         self.t += 1
         
+    # simply returns the time of the most recent addition to the drone's path
     def getTime(self):
         time = self.t + 1
         return time
         
+# Establish class for intruder
 class Intruder:
+    # attributes:
+    # IntX = the list of the rooms the intruder visits
+    # Intt = a list of the time spent in each of the rooms
     def __init__(self, name, IntX, Intt):
         self.name = name
         self.IntX = IntX
         self.Intt = Intt 
-        
+     
+    # Determines Sojourn Time (time spent in room), dependant on which room intruder is in    
     def detSoTime(self):
         room = self.IntX[-1]
-        SoTime = np.random.exponential(lambda_array[int(self.IntX[-1])-1])
+        SoTime = np.random.exponential(1/(lambda_array[int(self.IntX[-1])-1]))
+        if roundup == True:
+            SoTime = math.ceil(SoTime)
         return SoTime
     
+    # Finds the next room the intruder should enter
     def newroom(self):
         w = random.random()
         current_state = int(self.IntX[-1]-1)   # index
         room = np.where(np.cumsum(IntruderT[current_state,:]) >= w)[0][0] + 1
         return room
     
+    # Updates the intruders room (IntX) and time (Intt) attributes
     def updateX(self):
         SoTime = self.detSoTime()
         self.Intt.append(SoTime)
@@ -165,9 +182,11 @@ class Intruder:
         self.IntX = np.append(self.IntX,[newroom])
         return self.IntX, self.Intt
     
+    # Get's the time of the most recent addition to the intruders path
     def getTime(self):
         time = sum(self.Intt)
         return time
+    
     
 # Returns True if we need to update the Drone's position
 def nextToUpdate(Drone,Intruder):
@@ -179,18 +198,23 @@ def nextToUpdate(Drone,Intruder):
 
  
 # Returns time of collision if there is collision, else returns False
+# Does this by checking the most recently updated path between the two agents
 def Collision(Drone,Intruder):
-    #lower bound
     
+    # If the drone was last to update, check whether the last movement of the drone 
+    # forced it to find the intruder
     if DroneUpdate==True:
         Timelower = Drone.t
         Timeupper = Drone.t + 1
         RoomD = Drone.DroneX[-1]
         roomIdown = I1.IntX[np.where(np.cumsum(I1.Intt) >= Drone.t)[0][0]]
+        
+        # first check if the drone finds the intruder by moving into it's room
         if roomIdown == RoomD:
             return Timelower, RoomD
+        else:
+            return False
         
-        # Checking if there are more Intruder movements which cause collision
         TimeLimit = Timelower
         IndexLimit = np.where(np.cumsum(Intruder.Intt) >= Drone.t)[0][0]
         IndexLimit += 1    
@@ -198,19 +222,24 @@ def Collision(Drone,Intruder):
             if Intruder.Intt[IndexLimit - 1] < Timeupper:
                 if RoomD == Intruder.IntX[IndexLimit]:
                     return Intruder.Intt[IndexLimit - 1], RoomD
+                else:
+                    return False
             else:
                 IndexLimit += 1
-                
+    # If the drone was updated last, check whether or not it's most recent movement
+    # caused it to be found            
     if DroneUpdate==False:
         Timelower = sum(Intruder.Intt) - Intruder.Intt[-1]
         DroneTimelower = int(Timelower)
         if Intruder.IntX[-2] == Drone.DroneX[DroneTimelower]:
             return Timelower, Intruder.IntX[-2]
-        
-        
+        else:
+            return False
+ 
+       
 
 # ----------------------------------------------------------------------------
-# ----------- INPUT PARAMETERS TO DETERMINE INTRUDER'S STRATEGY --------------
+# ----------- Running simulation loop --------------
 # ----------------------------------------------------------------------------
  
         
@@ -226,6 +255,7 @@ for i in range(sims):
     DroneX[0] = 7
     D1 = Drone('D1', DroneX, 0)
 
+    # determining the intruder's intial movements depending on which strategy is used
     if stay10==False and stay1==False and run10 == False and run1 == False:
         IntX = np.zeros([1])
         IntX[0] = 9
@@ -233,13 +263,13 @@ for i in range(sims):
         I1.updateX()
      
     elif stay10 == True:        
-        IntX = np.array([9,6,5,10])
-        I1 = Intruder('I1',IntX,[0.01,0.01,0.01])
+        IntX = np.array([9,6,5,10,5])
+        I1 = Intruder('I1',IntX,[0.01,0.01,0.01,180.1])
         I1.updateX()
         
     elif run10 == True:
-        IntX = np.array([9,6,5,10,5])
-        I1 = Intruder('I1',IntX,[0.01,0.01,0.01,180.1])
+        IntX = np.array([9,6,5,10])
+        I1 = Intruder('I1',IntX,[0.1,0.1,0.1])
         I1.updateX()
         
     elif stay1 == True:
@@ -255,7 +285,7 @@ for i in range(sims):
     Collided = False
 
     
-    while Collided != True:
+    while Collided == False:
         if nextToUpdate(D1,I1) ==True:
             DroneUpdate = True
             IntUpdate = False
@@ -265,8 +295,13 @@ for i in range(sims):
             IntUpdate = True
             I1.updateX()
             
+        if D1.t >= 180:
+            TimeToCollision.append(180)
+            Collided = True
+            break
+            
         if stay10 == False and stay1 == False:
-            if Collision(D1,I1) != None:
+            if Collision(D1,I1) != False:
                 #print(Collision(D1,I1))
                 TimeToCollision.append(Collision(D1,I1)[0])
                 CollisionByRoom[int(Collision(D1,I1)[1]) - 1].append(Collision(D1,I1)[0])
@@ -278,24 +313,27 @@ for i in range(sims):
                 TimeToCollision.append(D1.t)
                 Collided = True
                 break
-
-# matplotlib histogram
-
             
-#asdf = plt.hist(CollisionByRoom[9], color = 'blue', edgecolor = 'black',
-     #    bins = 1000)
-# Add labels
+        
+# ----------------------------------------------------------------------------
+# ----------- Makes histogram plot if requried --------------
+# ----------------------------------------------------------------------------
+ 
 if makeplot == True:
-    asdf = plt.hist(TimeToCollision, color = 'blue', edgecolor = 'black',
-         bins = 80)
+    asdf = plt.hist(TimeToCollision, color = 'blue', edgecolor = 'blue',
+         bins = 600)
+
     plt.title('Distribution of time it takes for Drone to catch Intruder at room 10')
     plt.xlabel('Time taken (mins)')
     plt.ylabel('Occurances')
+    plt.style.use('seaborn-darkgrid')
     axes = plt.gca()
-    axes.set_xlim([0,50])
+    axes.set_xlim([0,40])
     #axes.set_ylim([0,100])    
     plt.savefig('asdf.png')
     
     
+    
+# print final results    
 print("")
 print(sum(TimeToCollision)/len(TimeToCollision))
