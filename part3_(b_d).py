@@ -101,3 +101,33 @@ stationary1 = evec1 / evec1.sum()
 #eigs finds complex eigenvalues and eigenvectors, so you'll want the real part.
 stationary1 = stationaryC.real
 
+#%%Part D: Expected time from room 9 to room 10
+lambdas = np.array([0.447213595,                        #set up of intruder lambdas
+                    0.547722558,
+                    0.632455532,
+                    0.707106781,
+                    0.774596669,
+                    0.836660027,
+                    0.894427191,
+                    0.948683298,
+                    1.0,
+                    1.048808848])
+    
+matrix = np.array([[-1,1.0,0,0,0,0,0,0,0,0],            #set up of matrix
+                      [0.5,-1,0.5,0,0,0,0,0,0,0],
+                      [0,1/3,-1,1/3,0,0,1/3,0,0,0],
+                      [0,0,1/2,-1,1/2,0,0,0,0,0],
+                      [0,0,0,1/4,-1,1/4,1/4,0,0,1/4],
+                      [0,0,0,0,1/2,-1,0,0,1/2,0],
+                      [0,0,1/3,0,1/3,0,-1,1/3,0,0],
+                      [0,0,0,0,0,0,1/2,-1,1/2,0],
+                      [0,0,0,0,0,1/2,0,1/2,-1,0],
+                      [0,0,0,0,0,0,0,0,0,-1]])
+ans = []
+for i in range(10):                                     #gathering -1/lambda
+    ans.append(-1/lambdas[i])
+ans[-1] = 0                                             #setting last value of answer to 0
+ans = np.array(ans)                                     #converting to numpy array
+ 
+expectation = np.linalg.solve(matrix,ans)                    #calculation of expected time
+
