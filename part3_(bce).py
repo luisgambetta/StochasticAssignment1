@@ -101,3 +101,26 @@ stationary1 = evec1 / evec1.sum()
 stationary1 = stationaryC.real
 
 
+#%%Part E: Finding the probability that X1 != X3
+stepsE = 3                  #steps necessary for probability
+x13E = np.zeros(stepsE)     #empty set of zeros with length necessary steps
+notequalsE = 0              #set count at 0
+neqlistE = []               #empty list to later append not equals count
+for k in range(10000):
+    for i in range(len(IntruderT)):
+        x13E[0] = i+1                       #for each simulations ensure that you start in all rooms
+        for j in range(stepsE-1):
+            w = random.random()
+            current_position = int(x13E[j]-1)
+            x13E[j+1] = np.min(np.where(np.cumsum(IntruderT[current_position,:])>=w)[0])+1
+        if x13E[0] != x13E[2]:              #find when room at x1 does not equal room at x3
+            notequalsE += 1                 #add to count when this occurs
+    neqlistE.append(notequalsE/((k+1)*10))  #append probability of x1 != x3 for every simulation run
+
+plt.style.use('seaborn-darkgrid')
+plt.plot(neqlistE[100:])                    #ignore first results to have a clearer graph
+plt.xlabel('Simulations')
+plt.ylabel('Probability')
+plt.show()
+print(np.mean(neqlistE[100:10000]))     #find the probability based on simulation
+
