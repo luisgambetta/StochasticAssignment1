@@ -18,6 +18,7 @@ IntruderT = np.array([[0,1.0,0,0,0,0,0,0,0,0],
                       [0,0,0,0,0,0,1/2,0,1/2,0],
                       [0,0,0,0,0,1/2,0,1/2,0,0],
                       [0,0,0,0,1,0,0,0,0,0]])
+
 #%%Part Bi: find px4|x5,x2 of room 2 at x4 given that at x5 and x2 it is in room 3 and 4 respectively
 stepsBi = 4                 #amount of necessary steps
 simulationsBi = 50000       #amount of simulations necessary
