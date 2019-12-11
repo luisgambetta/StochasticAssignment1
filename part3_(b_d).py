@@ -44,3 +44,42 @@ plt.plot(probabilityBi[25:])            #ignore first few results for cleaner gr
 plt.show()
 print(np.mean(probabilityBi[25:]))      #print probability based on simulation
 
+#%%Part Bii: Find the expectation of x3 given x1=7 (simulation) (analytically via excel)
+stepsBii = 3                    #amount of necessary steps
+simulationsBii = 500000         #amount of simulations
+x13Bii = np.zeros(stepsBii)     #empty set of zeros with length of necessary steps
+x13Bii[0] = 7                   #start in room 7
+x3listBii = []                  #empty list to append final room in simulations
+
+room2 = []                      #empty list to count occurances in room 2
+room4 = []                      #empty list to count occurances in room 4
+room6 = []                      #empty list to count occurances in room 6
+room7 = []                      #empty list to count occurances in room 7
+room9 = []                      #empty list to count occurances in room 9
+room10 = []                     #empty list to count occurances in room 10
+
+for i in range(simulationsBii):
+    for j in range(stepsBii-1):
+        w = random.random()
+        current_position = int(x13Bii[j]-1)
+        x13Bii[j+1] = np.min(np.where(np.cumsum(IntruderT[current_position,:])>=w)[0])+1 #random room following transition matrix 
+    x3listBii.append(x13Bii[-1])            #append final room in one simulations
+
+for rooms in range(len(x3listBii)):         #being counting and sorting where drone ends up
+    if x3listBii[rooms] == 2:
+        room2.append(x3listBii[rooms])      #append if in room 2
+    if x3listBii[rooms] == 4:
+        room4.append(x3listBii[rooms])      #append if in room 4
+    if x3listBii[rooms] == 6:
+        room6.append(x3listBii[rooms])      #append if in room 6
+    if x3listBii[rooms] == 7:
+        room7.append(x3listBii[rooms])      #append if in room 7
+    if x3listBii[rooms] == 9:
+        room9.append(x3listBii[rooms])      #append if in room 9
+    if x3listBii[rooms] == 10:
+        room10.append(x3listBii[rooms])     #append if in room 10
+        
+#print probability of drone ending up in rooms 2,4,6,7,9,10
+print(round(len(room2)/simulationsBii,2), round(len(room4)/simulationsBii,2), round(len(room6)/simulationsBii,2), round(len(room7)/simulationsBii,2), round(len(room9)/simulationsBii,2), round(len(room10)/simulationsBii,2))
+
+
