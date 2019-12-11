@@ -83,3 +83,21 @@ for rooms in range(len(x3listBii)):         #being counting and sorting where dr
 print(round(len(room2)/simulationsBii,2), round(len(room4)/simulationsBii,2), round(len(room6)/simulationsBii,2), round(len(room7)/simulationsBii,2), round(len(room9)/simulationsBii,2), round(len(room10)/simulationsBii,2))
 
 
+#%%Part C: Stationary Matrix
+S, U = eig(IntruderT.T)
+stationaryC = np.array(U[:, np.where(np.abs(S - 1.) < 1e-8)[0][0]].flat)
+stationaryC = stationaryC / np.sum(stationaryC)
+
+
+evals, evecs = np.linalg.eig(IntruderT.T)
+evec1 = evecs[:,np.isclose(evals, 1)]
+
+#Since np.isclose will return an array, we've indexed with an array
+#so we still have our 2nd axis.  Get rid of it, since it's only size 1.
+evec1 = evec1[:,0]
+
+stationary1 = evec1 / evec1.sum()
+
+#eigs finds complex eigenvalues and eigenvectors, so you'll want the real part.
+stationary1 = stationaryC.real
+
