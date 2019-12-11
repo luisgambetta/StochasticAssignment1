@@ -17,6 +17,7 @@ import pandas as pd
 # ----------- Q-MATRIX, TRANSITION MATRIX, ECT. USED -------------------------
 # ----------------------------------------------------------------------------
 
+# Drones Transition matrix
 DroneQ = np.array([[0,1,0,0,0,0,0,0,0,0],   # 1
                    [0.5,0,0.5,0,0,0,0,0,0,0],   # 2
                    [0,1/3,0,1/3,0,0,1/3,0,0,0], #3
@@ -28,6 +29,7 @@ DroneQ = np.array([[0,1,0,0,0,0,0,0,0,0],   # 1
                    [0,0,0,0,0,0.5,0,0.5,0,0],    # 9 
                    [0,0,0,1,0,0,0,0,0,0]])
 
+# input to exponential distribution function used to determine Intruder's sojourn time
 lambdas = np.array([0.447213595,
                     0.547722558,
                     0.632455532,
@@ -39,6 +41,7 @@ lambdas = np.array([0.447213595,
                     1.0,
                     1.048808848])
 
+# input to exponential distribution function used to determine Intruder's sojourn time used in Intruder's strategy to avoid drone
 lambdas_inverse = np.array([1/22.00220022,
                     1/11.00110011,
                     1/7.333528894,
@@ -50,6 +53,7 @@ lambdas_inverse = np.array([1/22.00220022,
                     1/11.00110011,
                     1/22.00220022])
 
+# input to exponential distribution function used to determine Intruder's sojourn time used in Intruder's strategy to avoid drone
 lambdas_pronounced = np.array([1/587.6448667,
                     1/17.14124947,
                     1/5.275657607,
@@ -72,6 +76,7 @@ IntruderQ = np.array([[-lambdas[0],lambdas[0],0,0,0,0,0,0,0,0],
                       [0,0,0,0,0,lambdas[8]/2,0,lambdas[8]/2,-lambdas[8],0],
                       [0,0,0,0,lambdas[9],0,0,0,0,-lambdas[9]]])
 
+# Intruder's transition matrix
 IntruderT = np.array([[0,1.0,0,0,0,0,0,0,0,0],
                       [0.5,0,0.5,0,0,0,0,0,0,0],
                       [0,1/3,0,1/3,0,0,1/3,0,0,0],
@@ -110,6 +115,9 @@ run1 = False
 
 # Make a histogram
 makeplot = True
+
+# if drone has to recharge battaries (only applicable for part g)
+partg = False
 
 # Number of simulation runs
 sims = 50000
@@ -241,13 +249,11 @@ def Collision(Drone,Intruder):
 # ----------------------------------------------------------------------------
 # ----------- Running simulation loop --------------
 # ----------------------------------------------------------------------------
- 
-        
-        
-TimeToCollision = []
-CollisionByRoom = [[],[],[],[],[], [],[],[],[],[]]   
+    
+TimeToCollision = [] # list to collect the time taken for intruder to be found
+CollisionByRoom = [[],[],[],[],[], [],[],[],[],[]]    # list to store the frequency of times the intruder is found in given room
 
-
+# Initialise the simulation loop
 for i in range(sims):
     if i%100==0:
         print(i)
@@ -256,36 +262,43 @@ for i in range(sims):
     D1 = Drone('D1', DroneX, 0)
 
     # determining the intruder's intial movements depending on which strategy is used
-    if stay10==False and stay1==False and run10 == False and run1 == False:
+    
+    if stay10==False and stay1==False and run10 == False and run1 == False: #if no strategy is used, establish starting position for drone and intruder
         IntX = np.zeros([1])
         IntX[0] = 9
         I1 = Intruder('I1',IntX,[])
         I1.updateX()
-     
-    elif stay10 == True:        
+    
+    # if intuder used strategy to run straight to and stay in room 10, establish starting position and time spent in each room
+    elif stay10 == True:       
         IntX = np.array([9,6,5,10,5])
         I1 = Intruder('I1',IntX,[0.01,0.01,0.01,180.1])
         I1.updateX()
-        
+    
+    # if intuder used strategy to run straight to room 10, and then move, establish starting position and time spent in each room    
     elif run10 == True:
         IntX = np.array([9,6,5,10])
         I1 = Intruder('I1',IntX,[0.1,0.1,0.1])
         I1.updateX()
-        
+    
+    # if intuder used strategy to run straight to and stay in room 1, establish starting position and time spent in each room    
     elif stay1 == True:
         IntX = np.array([9,8,7,3,2,1])
         I1 = Intruder('I1',IntX,[0.01,0.01,0.01,0.01])
         I1.updateX()
-        
+    
+    # if intuder used strategy to run straight to room 1 and then move from there, establish starting position and time spent in each room
     else:
         IntX = np.array([9,8,7,3,2,1,2])
         I1 = Intruder('I1',IntX,[0.01,0.01,0.01,0.01, 180.1])
         I1.updateX()
     
+
     Collided = False
 
-    
+    # Loop to see if the drone has found the intruder, and if not, update the position of an agent
     while Collided == False:
+        # figuring out which to update and updating it
         if nextToUpdate(D1,I1) ==True:
             DroneUpdate = True
             IntUpdate = False
@@ -294,12 +307,14 @@ for i in range(sims):
             DroneUpdate = False
             IntUpdate = True
             I1.updateX()
-            
-        if D1.t >= 180:
+        
+        # checking if drone has to recharge batteries (only applicable for final part (part g))
+        if partg and D1.t >= 180:
             TimeToCollision.append(180)
             Collided = True
             break
-            
+        
+        # checking if intruder has been found
         if stay10 == False and stay1 == False:
             if Collision(D1,I1) != False:
                 #print(Collision(D1,I1))
@@ -308,6 +323,7 @@ for i in range(sims):
                 Collided = True
                 break
         
+        # checking if intruder has been found if it just stays in one room (checks if drone goes into one of those rooms)
         if stay10 == True or stay1 == True:
             if D1.DroneX[-1]==10:
                 TimeToCollision.append(D1.t)
@@ -319,6 +335,7 @@ for i in range(sims):
 # ----------- Makes histogram plot if requried --------------
 # ----------------------------------------------------------------------------
  
+# makes histogram  
 if makeplot == True:
     asdf = plt.hist(TimeToCollision, color = 'blue', edgecolor = 'blue',
          bins = 600)
